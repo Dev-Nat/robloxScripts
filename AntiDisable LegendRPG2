@@ -1,0 +1,35 @@
+--https://www.roblox.com/games/4277144950/ARMOR-MARKET-Legend-RPG-2#!/game-instances
+
+local mt = getrawmetatable(game)
+setreadonly(mt,false)
+
+local namecall = mt.__namecall
+
+mt.__namecall = newcclosure(function(self,...)
+    local method = getnamecallmethod()
+    local args = {...}
+    
+    if method == "FireServer" and tostring(self) == "Protect" then
+        return warn("tried to fire lol");
+    end
+    
+    if method == "FindFirstChild" and args[1] == "AntiExploit" then
+        return true
+    end
+    return namecall(self, table.unpack(args))
+end)
+
+local sript = game:GetService("Players").NitroLeave.PlayerScripts.Anti
+local s2 = game:GetService("Players").NitroLeave.PlayerScripts.AntiExploit
+
+for i,v in pairs(getconnections(game.ReplicatedStorage.ChildAdded)) do
+    v:Disable()
+end
+
+s2:Destroy()
+sript:Destroy()
+
+
+
+
+
