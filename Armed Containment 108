@@ -64,58 +64,47 @@ end
 setreadonly(math, false); math.chance = function(percentage) local percentage = math.floor(percentage); local chance = math.floor(Random.new().NextNumber(Random.new(), 0, 1) * 100)/100; return chance <= percentage/100 end; setreadonly(math, true);
 
 local getClosestPlayerToCursor = function()
-local closestPlayer = nil
-local chance = math.chance(SilentAim["HitChance"])
-local shortestDistance = math.huge
-for i, v in pairs(players.GetPlayers(players)) do
-       if v ~= localPlayer and v.Character and v.Character.FindFirstChild(v.Character, "Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character.PrimaryPart ~= nil and v.Character.FindFirstChild(v.Character, "Head") then
-           if SilentAim["VisibleCheck"] and not isPartVisible(v.Character.PrimaryPart) then
-               return (chance and closestPlayer or localPlayer)
-           end
-           if SilentAim["TeamCheck"] then
-               if v.Team ~= localPlayer.Team then      
-                   local pos = currentCamera.WorldToViewportPoint(currentCamera, v.Character.PrimaryPart.Position)
-                   local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
-                   if magnitude < (SilentAim["FOV"] * 6 - 8) then
-                       if magnitude < shortestDistance then
-                           closestPlayer = v
-                           shortestDistance = magnitude
-                       end
-                   end
-               end
-           else
-               local pos = currentCamera.WorldToViewportPoint(currentCamera, v.Character.PrimaryPart.Position)
-               local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
-               if magnitude < (SilentAim["FOV"] * 6 - 8) then
-                   if magnitude < shortestDistance then
-                       closestPlayer = v
-                       shortestDistance = magnitude
-                   end
-               end
-           end
-end
-   end  
+    local closestPlayer = nil
+    local chance = math.chance(SilentAim["HitChance"])
+    local shortestDistance = math.huge
+    for i, v in pairs(players.GetPlayers(players)) do
+        if v ~= localPlayer and v.Character and v.Character.FindFirstChild(v.Character, "Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character.PrimaryPart ~= nil and v.Character.FindFirstChild(v.Character, "Head") then
+            if SilentAim["VisibleCheck"] and not isPartVisible(v.Character.PrimaryPart) then
+                return (chance and closestPlayer or localPlayer)
+            end
+            if SilentAim["TeamCheck"] then
+                if v.Team ~= localPlayer.Team then      
+                    local pos = currentCamera.WorldToViewportPoint(currentCamera, v.Character.PrimaryPart.Position)
+                    local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+                    if magnitude < (SilentAim["FOV"] * 6 - 8) then
+                        if magnitude < shortestDistance then
+                            closestPlayer = v
+                            shortestDistance = magnitude
+                        end
+                    end
+                end
+            else
+                local pos = currentCamera.WorldToViewportPoint(currentCamera, v.Character.PrimaryPart.Position)
+                local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+                if magnitude < (SilentAim["FOV"] * 6 - 8) then
+                    if magnitude < shortestDistance then
+                        closestPlayer = v
+                        shortestDistance = magnitude
+                    end
+                end
+            end
+        end
+    end  
    return (chance and closestPlayer or localPlayer)
 end
 
-mt.__index = newcclosure(function(t, k)
-    if t:IsA("Mouse") and (k == "Hit" or k == "Target") then
-        if SilentAim["Enabled"] then
-            local CPlayer = getClosestPlayerToCursor() 
-            if CPlayer and CPlayer.Character and CPlayer.Character.FindFirstChild(CPlayer.Character, "Head") and CPlayer ~= game.Players.LocalPlayer then
-                return (k == "Hit" and CPlayer.Character.Head.CFrame or CPlayer.Character.Head)
-            end
-        end
-    end
-    return backupindex(t, k)
-end)
+
 
 
 -- Disable Anti
 spawn(function( ... )
     game:GetService("ScriptContext"):SetTimeout(1)
 
-    local mt = getrawmetatable(game)
     setreadonly(mt,false)
 
     local namecall = mt.__namecall
@@ -135,6 +124,19 @@ spawn(function( ... )
         return namecall(self, table.unpack(args))
     end)
 
+    mt.__index = newcclosure(function(t, k)
+        if t:IsA("Mouse") and (k == "Hit" or k == "Target") then
+            if SilentAim["Enabled"] then
+                local CPlayer = getClosestPlayerToCursor() 
+                if CPlayer and CPlayer.Character and CPlayer.Character.FindFirstChild(CPlayer.Character, "Head") and CPlayer ~= game.Players.LocalPlayer then
+                    return (k == "Hit" and CPlayer.Character.Head.CFrame or CPlayer.Character.Head)
+                end
+            end
+        end
+        return backupindex(t, k)
+    end)
+
+
     local antiScript = game:GetService("Players").LocalPlayer.PlayerScripts.Client
     local localDoor = game:GetService("Players").LocalPlayer.PlayerScripts.LocalDoors
     for i,v in pairs(getconnections(antiScript.Changed)) do
@@ -143,7 +145,6 @@ spawn(function( ... )
     for i,v in pairs(getconnections(localDoor.Changed)) do
         v:Disable()
     end
-
 end)
 
 
