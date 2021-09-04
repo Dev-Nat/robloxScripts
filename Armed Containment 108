@@ -1,0 +1,277 @@
+-- https://www.roblox.com/games/1349062385/Armed-Containment-Area-108-V2#!/game-instances
+
+local StarterGui = game:GetService"StarterGui"
+function makePrompt(title,desc)
+    StarterGui:SetCore("SendNotification", {
+		Title = title;
+		Text = desc
+	})
+end
+
+-- // Vars
+local players = game.GetService(game, "Players")
+local guiservice = game.GetService(game, "GuiService")
+local runservice = game.GetService(game, "RunService")
+local renderstepped = runservice.RenderStepped
+local localPlayer = players.LocalPlayer
+local currentCamera = game.GetService(game, "Workspace").CurrentCamera
+local mouse = localPlayer.GetMouse(localPlayer)
+
+-- // MT Vars + Funcs
+local mt = getrawmetatable(game)
+local backupnamecall = mt.__namecall
+local backupnewindex = mt.__newindex
+local backupindex = mt.__index
+local setreadonly = setreadonly or make_writeable
+local getnamecallmethod = getnamecallmethod or get_namecall_method
+local newcclosure = newcclosure or function(f) return f end
+setreadonly(mt, false)
+
+-- // Silent Aim Vars
+getgenv().SilentAim = {
+   Enabled = false,
+   FOVRep = false,
+   TeamCheck = false,
+   VisibleCheck = true,
+   FOV = 100,
+   HitChance = 100,
+}
+
+local circle = Drawing.new("Circle")
+function updateCircle()
+   if circle.__OBJECT_EXISTS then
+       circle.Transparency = 1
+       circle.Visible = SilentAim["FOVRep"]
+       circle.Thickness = 2
+       circle.Color = Color3.fromRGB(231, 84, 128)
+       circle.NumSides = 100
+       circle.Radius = (SilentAim["FOV"] * 6) / 2
+       circle.Filled = false
+       circle.Position = Vector2.new(mouse.X, mouse.Y + (guiservice.GetGuiInset(guiservice).Y))
+   end
+end
+renderstepped.Connect(renderstepped, updateCircle)
+
+
+-- // Silent Aim Funcs
+function isPartVisible(part)
+   local camera = game.GetService(game, "Workspace").CurrentCamera
+   local character = game.GetService(game, "Players").LocalPlayer.Character.GetDescendants(game.GetService(game, "Players").LocalPlayer.Character)
+   local castPoints = {part.Position}
+return camera.GetPartsObscuringTarget(camera, castPoints, character)
+end
+
+setreadonly(math, false); math.chance = function(percentage) local percentage = math.floor(percentage); local chance = math.floor(Random.new().NextNumber(Random.new(), 0, 1) * 100)/100; return chance <= percentage/100 end; setreadonly(math, true);
+
+local getClosestPlayerToCursor = function()
+local closestPlayer = nil
+local chance = math.chance(SilentAim["HitChance"])
+local shortestDistance = math.huge
+for i, v in pairs(players.GetPlayers(players)) do
+       if v ~= localPlayer and v.Character and v.Character.FindFirstChild(v.Character, "Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character.PrimaryPart ~= nil and v.Character.FindFirstChild(v.Character, "Head") then
+           if SilentAim["VisibleCheck"] and not isPartVisible(v.Character.PrimaryPart) then
+               return (chance and closestPlayer or localPlayer)
+           end
+           if SilentAim["TeamCheck"] then
+               if v.Team ~= localPlayer.Team then      
+                   local pos = currentCamera.WorldToViewportPoint(currentCamera, v.Character.PrimaryPart.Position)
+                   local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+                   if magnitude < (SilentAim["FOV"] * 6 - 8) then
+                       if magnitude < shortestDistance then
+                           closestPlayer = v
+                           shortestDistance = magnitude
+                       end
+                   end
+               end
+           else
+               local pos = currentCamera.WorldToViewportPoint(currentCamera, v.Character.PrimaryPart.Position)
+               local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+               if magnitude < (SilentAim["FOV"] * 6 - 8) then
+                   if magnitude < shortestDistance then
+                       closestPlayer = v
+                       shortestDistance = magnitude
+                   end
+               end
+           end
+end
+   end  
+   return (chance and closestPlayer or localPlayer)
+end
+
+mt.__index = newcclosure(function(t, k)
+    if t:IsA("Mouse") and (k == "Hit" or k == "Target") then
+        if SilentAim["Enabled"] then
+            local CPlayer = getClosestPlayerToCursor() 
+            if CPlayer and CPlayer.Character and CPlayer.Character.FindFirstChild(CPlayer.Character, "Head") and CPlayer ~= game.Players.LocalPlayer then
+                return (k == "Hit" and CPlayer.Character.Head.CFrame or CPlayer.Character.Head)
+            end
+        end
+    end
+    return backupindex(t, k)
+end)
+
+
+-- Disable Anti
+spawn(function( ... )
+    game:GetService("ScriptContext"):SetTimeout(1)
+
+    local mt = getrawmetatable(game)
+    setreadonly(mt,false)
+
+    local namecall = mt.__namecall
+
+    mt.__namecall = newcclosure(function(self,...)
+        local method = getnamecallmethod()
+        local args = {...}
+        
+        if method == "FireServer" and tostring(self) == "Logs" then
+            return makePrompt("Anticheat Bypass","nigga tried to log");
+        end
+
+        if method == "Kick" then
+            return makePrompt("Anticheat Bypass","my nigga tried to kick yo ass")
+        end
+
+        return namecall(self, table.unpack(args))
+    end)
+
+    local antiScript = game:GetService("Players").LocalPlayer.PlayerScripts.Client
+    local localDoor = game:GetService("Players").LocalPlayer.PlayerScripts.LocalDoors
+    for i,v in pairs(getconnections(antiScript.Changed)) do
+        v:Disable()
+    end
+    for i,v in pairs(getconnections(localDoor.Changed)) do
+        v:Disable()
+    end
+
+end)
+
+
+
+
+
+local toolGiver = game:GetService("Workspace").Sectors.Sector3.SCPs["SCP-1162"]
+
+local library = loadstring(game:HttpGet(('https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wall%20v3')))()
+
+local w = library:CreateWindow("Armed Containment Area 108") -- Creates the window
+
+local c = w:CreateFolder("Item Teleport") -- Creates the folder(U will put here your buttons,etc)
+
+local d = w:CreateFolder("Aimbot")
+
+local b = w:CreateFolder("MISC")
+
+local plr = game.Players.LocalPlayer
+
+local genv = getgenv()
+
+genv.autotrain = false
+genv.tpCooldown = false
+
+local function teleportToDetector()
+    spawn(function ( ... )
+        local hrp = plr.Character.HumanoidRootPart
+        if hrp then
+            if not tpCooldown then
+                tpCooldown = true
+                local lastPos = hrp.CFrame
+                hrp.CFrame = toolGiver.CFrame * CFrame.new(0,0,3)
+                wait(0.3)
+                print(toolGiver.ClickDetector)
+                fireclickdetector(toolGiver.ClickDetector,32)
+                fireclickdetector(toolGiver.ClickDetector,32)
+                fireclickdetector(toolGiver.ClickDetector,32)
+                --wait()
+                hrp.CFrame = lastPos
+                wait(3)
+                tpCooldown = false
+            end
+        end
+    end)
+end
+
+c:Button("Teleport",function()
+    teleportToDetector()
+end)
+genv.loopTp = false
+c:Toggle("Loop teleport",function(bool)
+    loopTp = bool
+    spawn(function( ... )
+        while loopTp do
+            teleportToDetector()
+            wait()
+        end
+    end)
+end)
+
+function refreshPlrs()
+    local plrs = game:GetService"Players":GetPlayers()
+    for i = 1,#plrs do
+        if plrs[i] == plr then
+            table.remove(plrs,i)
+        end
+    end
+    return plrs
+end
+
+d:Toggle("Silent Aim",function(bool)
+    SilentAim["Enabled"] = bool
+end)
+
+d:Slider("FOV Radius",{
+    min = 5; -- min value of the slider
+    max = 200; -- max value of the slider
+    precise = false; -- max 2 decimals
+},function(value)
+    SilentAim["FOV"] = value
+    updateCircle()
+end)
+
+d:Toggle("Show Circle",function(bool)
+    SilentAim["FOVRep"] = bool
+    updateCircle()
+end)
+
+b:Slider("Slider",{
+    min = 10; -- min value of the slider
+    max = 50; -- max value of the slider
+    precise = true; -- max 2 decimals
+},function(value)
+    print(value)
+end)
+
+b:Bind("Bind",Enum.KeyCode.C,function() --Default bind
+    print("Yes")
+end)
+
+b:ColorPicker("ColorPicker",Color3.fromRGB(255,0,0),function(color) --Default color
+    print(color)
+end)
+
+b:Box("Box","number",function(value) -- "number" or "string"
+    print(value)
+end)
+
+b:DestroyGui()
+
+--[[
+How to refresh a dropdown:
+1)Create the dropdown and save it in a variable
+local yourvariable = b:Dropdown("Hi",yourtable,function(a)
+    print(a)
+end)
+2)Refresh it using the function
+yourvariable:Refresh(yourtable)
+How to refresh a label:
+1)Create your label and save it in a variable
+local yourvariable = b:Label("Pretty Useless NGL",{
+    TextSize = 25; -- Self Explaining
+    TextColor = Color3.fromRGB(255,255,255);
+    BgColor = Color3.fromRGB(69,69,69);
+})
+2)Refresh it using the function
+yourvariable:Refresh("Hello") It will only change the text ofc
+]]
+
+
